@@ -70,19 +70,23 @@ echo "" >> "$OUTPUT"
 echo "| Error Code | Search Terms | Missions Found |" >> "$OUTPUT"
 echo "|------------|-------------|----------------|" >> "$OUTPUT"
 
-declare -A PREFLIGHT_COVERAGE=(
-  ["MISSING_CREDENTIALS"]="kubeconfig credentials setup"
-  ["EXPIRED_CREDENTIALS"]="certificate rotation renewal"
-  ["RBAC_DENIED"]="rbac permissions rolebinding clusterrole"
-  ["CONTEXT_NOT_FOUND"]="kubeconfig context cluster"
-  ["CLUSTER_UNREACHABLE"]="cluster connectivity network troubleshoot"
-  ["MISSING_TOOLS"]="kubectl helm tool prerequisites install"
-  ["UNKNOWN_EXECUTION_FAILURE"]="troubleshoot debug error recovery"
+# Defined in explicit order so report output is stable across runs.
+# Each entry is "ERROR_CODE:search terms" — terms are OR-joined into a jq regex.
+# 7 additional gh API calls; well within the 5000/hr token rate limit.
+PREFLIGHT_ENTRIES=(
+  "MISSING_CREDENTIALS:kubeconfig credentials setup"
+  "EXPIRED_CREDENTIALS:certificate rotation renewal"
+  "RBAC_DENIED:rbac permissions rolebinding clusterrole"
+  "CONTEXT_NOT_FOUND:kubeconfig context cluster"
+  "CLUSTER_UNREACHABLE:cluster connectivity network troubleshoot"
+  "MISSING_TOOLS:kubectl helm tool prerequisites install"
+  "UNKNOWN_EXECUTION_FAILURE:troubleshoot debug error recovery"
 )
 
 PREFLIGHT_UNCOVERED=0
-for code in "${!PREFLIGHT_COVERAGE[@]}"; do
-  terms="${PREFLIGHT_COVERAGE[$code]}"
+for entry in "${PREFLIGHT_ENTRIES[@]}"; do
+  code="${entry%%:*}"
+  terms="${entry#*:}"
   jq_pattern=$(echo "$terms" | tr ' ' '|')
   count=$(gh api "repos/$KB_REPO/git/trees/main?recursive=1" \
     --jq "[.tree[].path | select(test(\"${jq_pattern}\"; \"i\"))] | length" \
