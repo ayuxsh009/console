@@ -288,13 +288,20 @@ jobs:
 
           DEADLINE=$(( $(date +%s) + ${{ env.HEALTH_TIMEOUT_S }} ))
           echo "Waiting for post-rollback /health (timeout: ${{ env.HEALTH_TIMEOUT_S }}s)..."
+          HEALTHY=false
           while [ "$(date +%s)" -lt "$DEADLINE" ]; do
             if curl -sf http://127.0.0.1:8080/health > /dev/null 2>&1; then
               echo "Post-rollback pod healthy after $(( $(date +%s) - DEADLINE + ${{ env.HEALTH_TIMEOUT_S }} ))s"
+              HEALTHY=true
               break
             fi
             sleep ${{ env.HEALTH_POLL_INTERVAL_S }}
           done
+
+          if ! $HEALTHY; then
+            echo "FAIL: post-rollback pod did not become healthy within ${{ env.HEALTH_TIMEOUT_S }}s"
+            exit 1
+          fi
 
           echo "--- Post-rollback /health ---"
           curl -sf http://127.0.0.1:8080/health | jq .
