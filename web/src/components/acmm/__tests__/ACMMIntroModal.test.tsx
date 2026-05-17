@@ -167,7 +167,7 @@ describe('ACMMIntroModal', () => {
     renderModal()
     const links = screen.getAllByRole('link')
     const paperLink = links.find((l) =>
-      l.getAttribute('href')?.includes('arxiv.org'),
+      l.getAttribute('href')?.startsWith('https://arxiv.org'),
     )
     expect(paperLink).toBeDefined()
     expect(paperLink).toHaveAttribute('target', '_blank')
@@ -177,7 +177,7 @@ describe('ACMMIntroModal', () => {
     renderModal()
     const links = screen.getAllByRole('link')
     const docsLink = links.find((l) =>
-      l.getAttribute('href')?.includes('console-docs.kubestellar.io'),
+      l.getAttribute('href')?.startsWith('https://console-docs.kubestellar.io'),
     )
     expect(docsLink).toBeDefined()
     expect(docsLink).toHaveAttribute('target', '_blank')
